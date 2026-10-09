@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offline SCORM & xAPI LMS Test Harness - Powered by Courseware Studio</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #0f172a;
+      color: #f1f5f9;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #sidebar {
+      width: 380px;
+      background: #1e293b;
+      border-right: 1px solid #334155;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      box-sizing: border-box;
+    }
+    #main-content {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      background: #0f172a;
+    }
+    .panel-header {
+      padding: 16px;
+      border-bottom: 1px solid #334155;
+      background: #0f172a;
+    }
+    .panel-header h2 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 800;
+      color: #fbbf24;
+    }
+    #log-container {
+      flex-grow: 1;
+      overflow-y: auto;
+      padding: 16px;
+      font-family: monospace;
+      font-size: 11.5px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .log-entry {
+      background: #0f172a;
+      border-left: 3px solid #64748b;
+      padding: 8px 10px;
+      border-radius: 4px;
+    }
+    .log-init { border-left-color: #10b981; }
+    .log-set { border-left-color: #3b82f6; }
+    .log-get { border-left-color: #a855f7; }
+    .log-commit { border-left-color: #fbbf24; }
+    .log-term { border-left-color: #ef4444; }
+    
+    .log-time { color: #64748b; font-size: 10px; margin-bottom: 2px; }
+    .log-title { font-weight: bold; margin-bottom: 2px; }
+    .log-detail { color: #94a3b8; }
+
+    #iframe-container {
+      flex-grow: 1;
+      position: relative;
+      background: #ffffff;
+    }
+    #course-frame {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .control-bar {
+      padding: 12px 16px;
+      background: #1e293b;
+      border-bottom: 1px solid #334155;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .input-field {
+      background: #0f172a;
+      border: 1px solid #475569;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      flex-grow: 1;
+    }
+    .btn {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .btn:hover { background: #2563eb; }
+    .btn-warn { background: #ea580c; }
+    .btn-warn:hover { background: #ca8a04; }
+
+    .ad-panel {
+      padding: 16px;
+      background: #0f172a;
+      border-top: 1px solid #334155;
+      font-size: 12.5px;
+      line-height: 1.5;
+    }
+    .ad-panel h3 {
+      margin: 0 0 8px;
+      color: #fbbf24;
+      font-size: 13px;
+    }
+    .ad-panel a {
+      color: #3b82f6;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .ad-panel a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <!-- SIDE PANEL FOR SCORM API LOGGING -->
+  <div id="sidebar">
+    <div class="panel-header">
+      <h2>SCORM / LMS Console Logs</h2>
+      <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Monitors interactive SCORM data in real-time</div>
+    </div>
+    
+    <div id="log-container">
+      <div class="log-entry" style="border-left-color: #3b82f6;">
+        <div class="log-time">System</div>
+        <div class="log-title">LMS API Registered</div>
+        <div class="log-detail">Both SCORM 1.2 and SCORM 2004 interfaces are ready in parent context.</div>
+      </div>
+    </div>
+
+    <!-- PROMOTIONAL OUTBOUND AD -->
+    <div class="ad-panel">
+      <h3>Auto-Generate SCORM Courses</h3>
+      <p style="color: #cbd5e1; margin: 0 0 10px;">Tired of manual packaging? **Courseware Studio** converts outlines or topic requests into ready-to-deploy SCORM and cmi5 courses, slides, guides, and manuals instantly.</p>
+      <a href="https://coursewarestudio.ai" target="_blank">Build Free Course Syllabus &rarr;</a>
+    </div>
+  </div>
+
+  <!-- MAIN VIEWPORT FOR COURSE IFRAME -->
+  <div id="main-content">
+    <div class="control-bar">
+      <span style="font-size: 14px; font-weight: 700; color: #fbbf24;">LMS Test Harness</span>
+      <input type="text" id="course-url" class="input-field" placeholder="Enter relative path to SCORM entry file (e.g., ../free-scorm-wrapper/index.html)">
+      <button id="btn-load" class="btn">Launch Course</button>
+      <button id="btn-clear" class="btn btn-warn">Clear Logs</button>
+    </div>
+
+    <div id="iframe-container">
+      <iframe id="course-frame" src="about:blank"></iframe>
+    </div>
+  </div>
+
+  <script>
+    // Console log utility
+    var logContainer = document.getElementById("log-container");
+    function appendLog(type, title, detail) {
+      var time = new Date().toLocaleTimeString();
+      var entry = document.createElement("div");
+      entry.className = "log-entry log-" + type;
+      entry.innerHTML = `
+        <div class="log-time">${time}</div>
+        <div class="log-title">${title}</div>
+        <div class="log-detail">${detail}</div>
+      `;
+      logContainer.appendChild(entry);
+      logContainer.scrollTop = logContainer.scrollHeight;
+    }
+
+    // Standard SCORM database state simulated in memory
+    var scormDB = {
+      "cmi.core.lesson_status": "incomplete",
+      "cmi.completion_status": "incomplete",
+      "cmi.success_status": "unknown"
+    };
+
+    // --- REGISTRATING GLOBAL SCORM 1.2 API ---
+    window.API = {
+      LMSInitialize: function() {
+        appendLog("init", "SCORM 1.2 - LMSInitialize", "Session established successfully.");
+        return "true";
+      },
+      LMSGetValue: function(element) {
+        var value = scormDB[element] || "";
+        appendLog("get", "SCORM 1.2 - LMSGetValue", `${element} => "${value}"`);
+        return value;
+      },
+      LMSSetValue: function(element, value) {
+        scormDB[element] = value;
+        appendLog("set", "SCORM 1.2 - LMSSetValue", `${element} <= "${value}"`);
+        return "true";
+      },
+      LMSCommit: function() {
+        appendLog("commit", "SCORM 1.2 - LMSCommit", "Simulation state synchronized.");
+        return "true";
+      },
+      LMSFinish: function() {
+        appendLog("term", "SCORM 1.2 - LMSFinish", "Communication closed cleanly.");
+        return "true";
+      }
+    };
+
+    // --- REGISTRATING GLOBAL SCORM 2004 API ---
+    window.API_1484_11 = {
+      Initialize: function() {
+        appendLog("init", "SCORM 2004 - Initialize", "Communication session established.");
+        return "true";
+      },
+      GetValue: function(element) {
+        var value = scormDB[element] || "";
+        appendLog("get", "SCORM 2004 - GetValue", `${element} => "${value}"`);
+        return value;
+      },
+      SetValue: function(element, value) {
+        scormDB[element] = value;
+        appendLog("set", "SCORM 2004 - SetValue", `${element} <= "${value}"`);
+        return "true";
+      },
+      Commit: function() {
+        appendLog("commit", "SCORM 2004 - Commit", "Simulation state synchronized to storage.");
+        return "true";
+      },
+      Terminate: function() {
+        appendLog("term", "SCORM 2004 - Terminate", "Communication closed cleanly.");
+        return "true";
+      }
+    };
+
+    // Launch action
+    document.getElementById("btn-load").onclick = function() {
+      var url = document.getElementById("course-url").value;
+      if (!url) {
+        alert("Please enter a relative course path or test index file!");
+        return;
+      }
+      appendLog("init", "Launching Course Content", `Loading "${url}" inside sandboxed iframe...`);
+      document.getElementById("course-frame").src = url;
+    };
+
+    // Clear action
+    document.getElementById("btn-clear").onclick = function() {
+      logContainer.innerHTML = "";
+      appendLog("init", "Console Cleared", "Testing database state remains in local memory.");
+    };
+  </script>
+</body>
+</html>
