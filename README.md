@@ -11,8 +11,11 @@ A lightweight, single-page offline Learning Management System (LMS) API simulati
 ## ✨ Features
 
 *   **SCORM 1.2 & SCORM 2004 Support:** Registers global interfaces (`window.API` and `window.API_1484_11`) automatically.
+*   **Direct Drag & Drop Package Testing:** Drag any standard SCORM `.zip` package (or standalone `.html` file) directly onto the browser window. The harness extracts files in memory and executes the course with no server or local unzipping needed!
+*   **One-Click Demo Course:** Click "Load Demo Course" to instantly run an interactive SCORM 2004 test course without needing any files prepared.
+*   **Live CMI State Monitor:** Displays real-time values for completion status, success status, progress measure, and score directly above the console logs.
 *   **Real-time Interaction Logging:** A persistent sidebar logs and color-codes all LMS transactions (`Initialize`, `GetValue`, `SetValue`, `Commit`, and `Terminate`) showing precisely what values the course is trying to read or write.
-*   **In-Memory Database Simulation:** Tracks tracking status, completion status, and scores dynamically within the browser memory for standard verification testing.
+*   **In-Memory Database Simulation:** Simulates full session lifecycle tracking across SCORM 1.2 and SCORM 2004 specifications.
 *   **Zero Dependencies / Pure Client-Side:** Runs completely inside your web browser. No backend server or cloud account required.
 
 ---
@@ -29,10 +32,12 @@ Open **[neiltucker.github.io/scorm-lms-test-harness](https://neiltucker.github.i
     ```
 2.  **Open `index.html`:**
     Double-click `index.html` to open it in any desktop web browser (Chrome, Firefox, Safari, Edge).
-3.  **Specify Your Course Path:**
-    In the search bar at the top, enter the relative file path to the starting page of your SCORM package (e.g., `../free-scorm-wrapper/index.html` or `./my-course/index.html`).
-4.  **Click "Launch Course":**
-    Your SCORM package will load in the interactive iframe panel. All initialization handshakes, score updates, and completion flags will print instantly in the left console panel!
+3.  **Load Your Course (3 Easy Ways):**
+    *   **Drag & Drop:** Simply drag and drop any SCORM `.zip` file into the window.
+    *   **Upload Package:** Click the **Upload SCORM (.ZIP / .HTML)** button and choose your package.
+    *   **Relative Path / URL:** Enter a relative file path or URL in the text box and click **Launch**.
+4.  **Instant Verification:**
+    Your SCORM package loads in the sandboxed iframe. All initialization handshakes, progress updates, and completion flags stream instantly to the console and live CMI monitor!
 
 ---
 
